@@ -15,5 +15,9 @@
   },
   "devDependencies": {
     "@types/ws": "^8.5.4"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.7",
+    "utf-8-validate": "^6.0.1"
   }
 }
