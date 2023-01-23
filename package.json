@@ -9,6 +9,7 @@
   "author": "huferr",
   "license": "MIT",
   "dependencies": {
+    "express": "^4.18.2",
     "uuid": "^9.0.0",
     "ws": "^8.12.0"
   },
