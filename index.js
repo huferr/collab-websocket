@@ -29,8 +29,10 @@ import Code from "@tiptap/extension-code";
 
 const documents = {};
 const fieldName = "default";
+const PORT = process.env.PORT || 80;
 
 const server = Server.configure({
+  port: PORT,
   async onChange(data) {
     const save = () => {
       // Convert the y-doc to something you can actually use in your views.
