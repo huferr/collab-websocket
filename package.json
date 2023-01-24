@@ -6,14 +6,39 @@
   "scripts": {
     "start": "node index.js"
   },
+  "type": "module",
   "author": "huferr",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "uuid": "^9.0.0",
+    "@hocuspocus/server": "^1.0.0",
+    "@hocuspocus/transformer": "^1.0.0",
+    "@tiptap/extension-blockquote": "^2.0.0-beta.209",
+    "@tiptap/extension-bold": "^2.0.0-beta.209",
+    "@tiptap/extension-bullet-list": "^2.0.0-beta.209",
+    "@tiptap/extension-code": "^2.0.0-beta.209",
+    "@tiptap/extension-code-block": "^2.0.0-beta.209",
+    "@tiptap/extension-code-block-lowlight": "^2.0.0-beta.209",
+    "@tiptap/extension-collaboration": "^2.0.0-beta.209",
+    "@tiptap/extension-collaboration-cursor": "^2.0.0-beta.209",
+    "@tiptap/extension-document": "^2.0.0-beta.209",
+    "@tiptap/extension-dropcursor": "^2.0.0-beta.209",
+    "@tiptap/extension-gapcursor": "^2.0.0-beta.209",
+    "@tiptap/extension-hard-break": "^2.0.0-beta.209",
+    "@tiptap/extension-heading": "^2.0.0-beta.209",
+    "@tiptap/extension-history": "^2.0.0-beta.209",
+    "@tiptap/extension-horizontal-rule": "^2.0.0-beta.209",
+    "@tiptap/extension-italic": "^2.0.0-beta.209",
+    "@tiptap/extension-list-item": "^2.0.0-beta.209",
+    "@tiptap/extension-ordered-list": "^2.0.0-beta.209",
+    "@tiptap/extension-paragraph": "^2.0.0-beta.209",
+    "@tiptap/extension-placeholder": "^2.0.0-beta.209",
+    "@tiptap/extension-strike": "^2.0.0-beta.209",
+    "@tiptap/extension-text": "^2.0.0-beta.209",
+    "debounce": "^1.2.1",
     "ws": "^8.12.0"
   },
   "devDependencies": {
+    "@types/debounce": "^1.2.1",
     "@types/ws": "^8.5.4"
   },
   "optionalDependencies": {

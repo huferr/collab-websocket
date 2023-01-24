@@ -1,78 +1,106 @@
-const { WebSocketServer, WebSocket } = require("ws");
+import { Server } from "@hocuspocus/server";
+import { TiptapTransformer } from "@hocuspocus/transformer";
 
-const express = require("express");
-const uuidv4 = require("uuid").v4;
+import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
 
-const PORT = process.env.PORT || 8000;
-const INDEX = '/index.html';
+// Extensions
+import { Collaboration } from "@tiptap/extension-collaboration";
+import { CollaborationCursor } from "@tiptap/extension-collaboration-cursor";
+import { Document } from "@tiptap/extension-document";
+import { Placeholder } from "@tiptap/extension-placeholder";
+import { Blockquote } from "@tiptap/extension-blockquote";
+import { BulletList } from "@tiptap/extension-bullet-list";
+import { Heading } from "@tiptap/extension-heading";
+import { Text } from "@tiptap/extension-text";
+import { ListItem } from "@tiptap/extension-list-item";
+import { Paragraph } from "@tiptap/extension-paragraph";
+import { HardBreak } from "@tiptap/extension-hard-break";
+import { HorizontalRule } from "@tiptap/extension-horizontal-rule";
+import { OrderedList } from "@tiptap/extension-ordered-list";
+import { Dropcursor } from "@tiptap/extension-dropcursor";
+import { Gapcursor } from "@tiptap/extension-gapcursor";
+import { History } from "@tiptap/extension-history";
 
-const server = express()
-  .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
-  .listen(PORT, () => console.log(`Listening on ${PORT}`));
+// Marks
+import Bold from "@tiptap/extension-bold";
+import Strike from "@tiptap/extension-strike";
+import Italic from "@tiptap/extension-italic";
+import Code from "@tiptap/extension-code";
 
-const wsServer = new WebSocketServer({ server });
+const documents = {};
+const fieldName = "default";
 
-// I'm maintaining all active connections in this object
-const clients = {};
-// I'm maintaining all active users in this object
-const users = {};
-// The current editor content is maintained here.
-let editorContent = null;
-// User activity history.
-let userActivity = [];
+const server = Server.configure({
+  async onChange(data) {
+    const save = () => {
+      // Convert the y-doc to something you can actually use in your views.
+      // In this example we use the TiptapTransformer to get JSON from the given
+      // ydoc.
 
-// Event types
-const typesDef = {
-  USER_EVENT: "userevent",
-  CONTENT_CHANGE: "contentchange",
-};
+      const documentName = data?.documentName;
 
-function broadcastMessage(json) {
-  // We are sending the current data to all connected clients
-  const data = JSON.stringify(json);
-  for (let userId in clients) {
-    let client = clients[userId];
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(data);
+      const prosemirrorJSON = TiptapTransformer.fromYdoc(data.document);
+
+      // Save your document. In a real-world app this could be a database query
+      // a webhook or something else
+      documents[documentName] = JSON.stringify(prosemirrorJSON);
+
+      // Maybe you want to store the user who changed the document?
+      // Guess what, you have access to your custom context from the
+      // onConnect hook here. See authorization & authentication for more
+      // details
+      console.log(
+        `Document ${data?.documentName} changed by ${data?.context?.user?.name}`
+      );
+    };
+
+    save();
+  },
+  async onLoadDocument(data) {
+    // The Tiptap collaboration extension uses shared types of a single y-doc
+    // to store different fields in the same document.
+    // The default field in Tiptap is simply called "default"
+
+    const documentName = data?.documentName;
+
+    // Check if the given field already exists in the given y-doc.
+    // Important: Only import a document if it doesn't exist in the primary data storage!
+    if (!data.document.isEmpty(fieldName)) {
+      return;
     }
-  }
-}
 
-function handleMessage(message, userId) {
-  const dataFromClient = JSON.parse(message.toString());
-  const json = { type: dataFromClient.type };
-  if (dataFromClient.type === typesDef.USER_EVENT) {
-    users[userId] = dataFromClient;
-    userActivity.push(`${dataFromClient.username} joined to edit the document`);
-    json.data = { users, userActivity };
-  } else if (dataFromClient.type === typesDef.CONTENT_CHANGE) {
-    editorContent = dataFromClient.content;
-    json.data = { editorContent, userActivity };
-  }
-  broadcastMessage(json);
-}
+    if (!documents[documentName]) return;
 
-function handleDisconnect(userId) {
-  console.log(`${userId} disconnected.`);
-  const json = { type: typesDef.USER_EVENT };
-  const username = users[userId]?.username || userId;
-  userActivity.push(`${username} left the document`);
-  json.data = { users, userActivity };
-  delete clients[userId];
-  delete users[userId];
-  broadcastMessage(json);
-}
+    // Get the document from somewhere. In a real world application this would
+    // probably be a database query or an API call
+    const prosemirrorJSON = JSON.parse(documents[documentName] || "{}");
 
-// A new client connection request received
-wsServer.on("connection", function (connection) {
-  // Generate a unique code for every user
-  const userId = uuidv4();
-  console.log("Recieved a new connection");
-
-  // Store the new connection and handle messages
-  clients[userId] = connection;
-  console.log(`${userId} connected.`);
-  connection.on("message", (message) => handleMessage(message, userId));
-  // User disconnected
-  connection.on("close", () => handleDisconnect(userId));
+    // Convert the editor format to a y-doc. The TiptapTransformer requires you to pass the list
+    // of extensions you use in the frontend to create a valid document
+    return TiptapTransformer.toYdoc(prosemirrorJSON.default, fieldName, [
+      Document,
+      Text,
+      Heading,
+      Paragraph,
+      CodeBlockLowlight,
+      Collaboration,
+      CollaborationCursor,
+      Placeholder,
+      Blockquote,
+      BulletList,
+      ListItem,
+      HardBreak,
+      HorizontalRule,
+      OrderedList,
+      Dropcursor,
+      Gapcursor,
+      History,
+      Bold,
+      Strike,
+      Italic,
+      Code,
+    ]);
+  },
 });
+
+server.listen();
